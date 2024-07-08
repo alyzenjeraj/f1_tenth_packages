@@ -27,13 +27,13 @@ class WallFollow(Node):
         self.b = 0 # Taken at 0/90 Degrees
 
         # TODO: set PID gains
-        self.kp = 2
-        # self.kd = 
-        # self.ki = 
+        self.kp = 0.8
+        self.kd = 0.2
+        self.ki = 0.0002
 
         # TODO: store history
-        # self.integral = 
-        # self.prev_error = 
+        self.integral = 0
+        self.prev_error = 0
         # self.error = 
 
         # TODO: store any necessary values you think you'll need
@@ -78,6 +78,7 @@ class WallFollow(Node):
         alpha = math.atan(numerator/denomenator)
 
         d_t = b_dist * math.cos(alpha)
+        print(f'Distance: {d_t}')
         l = 0.1
         d_t_1 = d_t + (l * math.sin(alpha))
 
@@ -95,13 +96,23 @@ class WallFollow(Node):
         Returns:
             None
         """
-        angle = self.kp * error
+
+
         # TODO: Use kp, ki & kd to implement a PID controller
+        self.integral += error * 0.1 # Time between messages
+        deriv = (error - self.prev_error) / 0.1
+
+        angle = (self.kp * error) + (self.ki * self.integral) + (self.kd * deriv)
+        print(f'Angle: {math.degrees(angle)}')
+
+        
+        # TODO: fill in drive message and publish
         drive_msg = AckermannDriveStamped()
         drive_msg.drive.speed = velocity
         drive_msg.drive.steering_angle = angle
-        # TODO: fill in drive message and publish
         self.drive_pub.publish(drive_msg)
+
+        self.prev_error = error
 
     def scan_callback(self, msg):
         """
@@ -114,12 +125,13 @@ class WallFollow(Node):
             None
         """
         angle_increment = msg.angle_increment
+
         angle_min = msg.angle_min
         range_a = self.get_range(msg.ranges, -45, angle_min, angle_increment) 
         range_b = self.get_range(msg.ranges, -90, angle_min, angle_increment) 
 
         # error = 0.0 # TODO: replace with error calculated by get_error()
-        error = self.get_error(range_a, range_b, 0.5)
+        error = self.get_error(range_a, range_b, 0.7)
 
         velocity = 0.0
         if abs(error) < 0.2:
