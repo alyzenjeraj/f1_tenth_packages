@@ -27,7 +27,7 @@ class WallFollow(Node):
         self.b = 0 # Taken at 0/90 Degrees
 
         # TODO: set PID gains
-        self.kp = 0.8
+        self.kp = 2
         self.kd = 0.2
         self.ki = 0.0002
 
